@@ -33,7 +33,7 @@ public class AppTest {
 
     @Test
     public void testUpdate() {
-        accountDAO.update(new Account(4, "李四", new Timestamp(System.currentTimeMillis()), new Timestamp(System.currentTimeMillis())));
+        accountDAO.update(new Account(4L, "李四", new Timestamp(System.currentTimeMillis()), new Timestamp(System.currentTimeMillis())));
     }
 
     @Test

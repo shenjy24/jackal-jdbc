@@ -5,7 +5,6 @@ import com.jonas.util.BeanHandler;
 import com.jonas.util.JdbcTemplate;
 import org.apache.commons.collections4.CollectionUtils;
 
-import javax.sql.DataSource;
 import java.sql.Timestamp;
 import java.util.List;
 

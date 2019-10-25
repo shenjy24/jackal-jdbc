@@ -20,7 +20,7 @@ import java.sql.Timestamp;
 @AllArgsConstructor
 public class Account {
     @Column(name = "account_id")
-    private Integer accountId;
+    private Long accountId;
     private String account;
     private Timestamp ctime;
     private Timestamp utime;

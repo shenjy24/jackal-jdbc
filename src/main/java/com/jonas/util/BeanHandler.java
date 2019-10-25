@@ -1,5 +1,7 @@
 package com.jonas.util;
 
+import org.apache.commons.beanutils.BeanUtils;
+
 import javax.persistence.Column;
 import java.beans.BeanInfo;
 import java.beans.Introspector;
@@ -41,7 +43,8 @@ public class BeanHandler<T> implements ResultSetHandler<List<T>> {
                         columnName = field.getAnnotation(Column.class).name();
                     }
                     Object value = resultSet.getObject(columnName);
-                    descriptor.getWriteMethod().invoke(obj, value);
+                    BeanUtils.setProperty(obj, descriptor.getName(), value);
+//                    descriptor.getWriteMethod().invoke(obj, value);
                 }
                 list.add(obj);
             }
