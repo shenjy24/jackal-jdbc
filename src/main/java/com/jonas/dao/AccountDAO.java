@@ -3,8 +3,11 @@ package com.jonas.dao;
 import com.jonas.domain.Account;
 import com.jonas.util.BeanHandler;
 import com.jonas.util.JdbcTemplate;
+import com.jonas.util.PropertyUtils;
 import org.apache.commons.collections4.CollectionUtils;
 
+import java.beans.IntrospectionException;
+import java.lang.reflect.InvocationTargetException;
 import java.sql.Timestamp;
 import java.util.List;
 
@@ -36,10 +39,10 @@ public class AccountDAO extends BaseDAO {
         }
     }
 
-    public void save(Account account) {
+    public void save(Account account) throws IllegalAccessException, IntrospectionException, InvocationTargetException {
         String sql = "insert into tb_account (account_id, account, ctime, utime) value (?,?,?,?)";
-        Object[] params = new Object[] {account.getAccountId(), account.getAccount(), account.getCtime(), account.getUtime()};
-        JdbcTemplate.execute(sql, params);
+//        Object[] params = new Object[] {account.getAccountId(), account.getAccount(), account.getCtime(), account.getUtime()};
+        JdbcTemplate.execute(sql, PropertyUtils.findFieldValue(account));
     }
 
     public void delete(Long accountId) {
@@ -54,7 +57,7 @@ public class AccountDAO extends BaseDAO {
     }
 
     public Account get(Long accountId) {
-        String sql = "select account_id, account, ctime, utime from tb_account where account_id = ?";
+        String sql = "select * from tb_account where account_id = ?";
         List<Account> accounts = JdbcTemplate.query(sql, new BeanHandler<>(Account.class), accountId);
         return CollectionUtils.isEmpty(accounts) ? null : accounts.get(0);
     }

@@ -27,4 +27,15 @@ public class PropertyUtils {
             throw e;
         }
     }
+
+    public static Object[] findFieldValue(Object object) throws IllegalAccessException {
+        Field[] fields = ClassUtils.getRealClass(object).getDeclaredFields();
+        Object[] values = new Object[fields.length];
+        for (int i = 0; i < fields.length; i++) {
+            Field field = fields[i];
+            field.setAccessible(true);
+            values[i] = field.get(object);
+        }
+        return values;
+    }
 }

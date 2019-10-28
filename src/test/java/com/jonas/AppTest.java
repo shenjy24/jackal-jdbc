@@ -2,7 +2,6 @@ package com.jonas;
 
 import com.jonas.dao.AccountDAO;
 import com.jonas.domain.Account;
-import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
@@ -23,7 +22,11 @@ public class AppTest {
 
     @Test
     public void testSave() {
-        accountDAO.save(new Account(null, "张三", new Timestamp(System.currentTimeMillis()), new Timestamp(System.currentTimeMillis())));
+        try {
+            accountDAO.save(new Account(null, "张三", new Timestamp(System.currentTimeMillis()), new Timestamp(System.currentTimeMillis())));
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
     }
 
     @Test
@@ -38,7 +41,7 @@ public class AppTest {
 
     @Test
     public void testGet() {
-        Account account = accountDAO.get(4L);
+        Account account = accountDAO.get(1L);
         System.out.println(account);
     }
 
