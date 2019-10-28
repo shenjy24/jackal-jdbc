@@ -1,13 +1,14 @@
 package com.jonas.dao;
 
 import com.jonas.domain.Account;
-import com.jonas.util.BeanHandler;
-import com.jonas.util.JdbcTemplate;
 import com.jonas.util.PropertyUtils;
+import com.jonas.util.jdbc.BeanHandler;
+import com.jonas.util.jdbc.DruidUtils;
+import com.jonas.util.jdbc.JdbcTemplate;
 import org.apache.commons.collections4.CollectionUtils;
 
-import java.beans.IntrospectionException;
-import java.lang.reflect.InvocationTargetException;
+import java.sql.Connection;
+import java.sql.PreparedStatement;
 import java.sql.Timestamp;
 import java.util.List;
 
@@ -28,6 +29,10 @@ public class AccountDAO extends BaseDAO {
             "  PRIMARY KEY (`account_id`)\n" +
             ") ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 comment '账户信息表'";
 
+    private static final String DELETE_ALL = "delete from tb_account";
+    private static final String INSERT = "insert into tb_account (account_id, account, ctime, utime) value (?,?,?,?)";
+    private static final String DELETE = "delete from tb_account where account_id = ?";
+
     public AccountDAO() {
         createIfAbsent();
     }
@@ -39,20 +44,18 @@ public class AccountDAO extends BaseDAO {
         }
     }
 
-    public void save(Account account) throws IllegalAccessException, IntrospectionException, InvocationTargetException {
-        String sql = "insert into tb_account (account_id, account, ctime, utime) value (?,?,?,?)";
+    public void save(Account account) throws IllegalAccessException {
 //        Object[] params = new Object[] {account.getAccountId(), account.getAccount(), account.getCtime(), account.getUtime()};
-        JdbcTemplate.execute(sql, PropertyUtils.findFieldValue(account));
+        JdbcTemplate.execute(INSERT, PropertyUtils.findFieldValue(account));
     }
 
     public void delete(Long accountId) {
-        String sql = "delete from tb_account where account_id = ?";
-        JdbcTemplate.execute(sql, accountId);
+        JdbcTemplate.execute(DELETE, accountId);
     }
 
     public void update(Account account) {
         String sql = "update tb_account set account = ?, utime = ? where account_id = ?";
-        Object[] params = new Object[] {account.getAccount(), new Timestamp(System.currentTimeMillis()), account.getAccountId()};
+        Object[] params = new Object[]{account.getAccount(), new Timestamp(System.currentTimeMillis()), account.getAccountId()};
         JdbcTemplate.execute(sql, params);
     }
 
@@ -60,6 +63,78 @@ public class AccountDAO extends BaseDAO {
         String sql = "select * from tb_account where account_id = ?";
         List<Account> accounts = JdbcTemplate.query(sql, new BeanHandler<>(Account.class), accountId);
         return CollectionUtils.isEmpty(accounts) ? null : accounts.get(0);
+    }
+
+    public void reset(List<Account> accounts) {
+        PreparedStatement statement = null;
+        Connection connection = null;
+        try {
+            connection = DruidUtils.getConnection();
+            connection.setAutoCommit(false);
+            statement = connection.prepareStatement(DELETE_ALL);
+            statement.execute();
+
+            statement = connection.prepareStatement(INSERT);
+            for (Account account : accounts) {
+                statement.setLong(1, account.getAccountId());
+                statement.setString(2, account.getAccount());
+                statement.setTimestamp(4, account.getCtime());
+                statement.setTimestamp(5, account.getUtime());
+                statement.addBatch();
+            }
+            statement.executeBatch();
+            connection.commit();
+        } catch (Exception e) {
+            rollback(connection);
+        } finally {
+            closeStatement(statement);
+            closeConnection(connection);
+        }
+    }
+
+    public void batchDelete(List<Account> accounts) {
+        PreparedStatement deleteStat = null;
+        Connection connection = null;
+        try {
+            connection = DruidUtils.getConnection();
+            connection.setAutoCommit(false);
+            deleteStat = connection.prepareStatement(DELETE);
+            for (Account account : accounts) {
+                deleteStat.setLong(1, account.getAccountId());
+                deleteStat.addBatch();
+            }
+            deleteStat.executeBatch();
+            connection.commit();
+        } catch (Exception e) {
+            rollback(connection);
+        } finally {
+            closeStatement(deleteStat);
+            closeConnection(connection);
+        }
+    }
+
+    public void batchInsert(List<Account> accounts) {
+        PreparedStatement statement = null;
+        Connection connection = null;
+        try {
+            connection = DruidUtils.getConnection();
+            connection.setAutoCommit(false);
+            statement = connection.prepareStatement(INSERT);
+            for (Account account : accounts) {
+                statement.setLong(1, account.getAccountId());
+                statement.setString(2, account.getAccount());
+                statement.setTimestamp(4, account.getCtime());
+                statement.setTimestamp(5, account.getUtime());
+                statement.addBatch();
+            }
+            statement.executeBatch();
+            connection.commit();
+        } catch (Exception e) {
+            rollback(connection);
+        } finally {
+            closeStatement(statement);
+            closeConnection(connection);
+        }
     }
 
     public List<Account> list() {

@@ -1,7 +1,6 @@
-package com.jonas.util;
+package com.jonas.util.jdbc;
 
 import com.alibaba.druid.pool.DruidDataSourceFactory;
-import lombok.Getter;
 
 import javax.sql.DataSource;
 import java.io.InputStream;

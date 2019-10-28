@@ -1,5 +1,6 @@
-package com.jonas.util;
+package com.jonas.util.jdbc;
 
+import com.jonas.util.PropertyUtils;
 import org.apache.commons.beanutils.BeanUtils;
 
 import javax.persistence.Column;

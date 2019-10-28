@@ -1,4 +1,4 @@
-package com.jonas.util;
+package com.jonas.util.jdbc;
 
 import java.sql.ResultSet;
 

@@ -49,4 +49,15 @@ public abstract class BaseDAO {
             e.printStackTrace();
         }
     }
+
+    protected void rollback(Connection connection) {
+        try {
+            if (null != connection) {
+                connection.setAutoCommit(true);
+                connection.rollback();
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+    }
 }
