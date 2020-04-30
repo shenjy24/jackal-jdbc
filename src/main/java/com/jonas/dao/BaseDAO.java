@@ -53,8 +53,8 @@ public abstract class BaseDAO {
     protected void rollback(Connection connection) {
         try {
             if (null != connection) {
-                connection.setAutoCommit(true);
                 connection.rollback();
+                connection.setAutoCommit(true);
             }
         } catch (SQLException e) {
             e.printStackTrace();

@@ -79,13 +79,14 @@ public class AccountDAO extends BaseDAO {
             for (Account account : accounts) {
                 statement.setLong(1, account.getAccountId());
                 statement.setString(2, account.getAccount());
-                statement.setTimestamp(4, account.getCtime());
-                statement.setTimestamp(5, account.getUtime());
+                statement.setTimestamp(3, account.getCtime());
+                statement.setTimestamp(4, account.getUtime());
                 statement.addBatch();
             }
             statement.executeBatch();
             connection.commit();
         } catch (Exception e) {
+            e.printStackTrace();
             rollback(connection);
         } finally {
             closeStatement(statement);

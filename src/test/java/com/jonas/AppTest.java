@@ -6,6 +6,7 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 
 import java.sql.Timestamp;
+import java.util.Arrays;
 import java.util.List;
 
 /**
@@ -49,5 +50,12 @@ public class AppTest {
     public void testList() {
         List<Account> accounts = accountDAO.list();
         System.out.println(accounts);
+    }
+
+    @Test
+    public void reset() {
+        Account account = new Account(1L, "李五", new Timestamp(System.currentTimeMillis()), new Timestamp(System.currentTimeMillis()));
+        List<Account> accounts = Arrays.asList(account);
+        accountDAO.reset(accounts);
     }
 }
