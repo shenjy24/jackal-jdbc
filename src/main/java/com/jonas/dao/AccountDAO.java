@@ -21,17 +21,18 @@ import java.util.List;
  */
 public class AccountDAO extends BaseDAO {
 
-    private static final String CREATE = "CREATE TABLE `tb_account` (\n" +
-            "  `account_id` int(11) NOT NULL auto increment comment '账户ID',\n" +
+    private final String TABLE_NAME = "tb_account";
+    private final String CREATE = "CREATE TABLE `%s` (\n" +
+            "  `account_id` int(11) NOT NULL auto_increment comment '账户ID',\n" +
             "  `account` varchar(32) DEFAULT NULL comment '账户',\n" +
             "  `ctime` datetime DEFAULT NULL comment '创建时间',\n" +
             "  `utime` datetime DEFAULT NULL comment '更新时间',\n" +
             "  PRIMARY KEY (`account_id`)\n" +
             ") ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 comment '账户信息表'";
 
-    private static final String DELETE_ALL = "delete from tb_account";
-    private static final String INSERT = "insert into tb_account (account_id, account, ctime, utime) value (?,?,?,?)";
-    private static final String DELETE = "delete from tb_account where account_id = ?";
+    private final String DELETE_ALL = "delete from `%s`";
+    private final String INSERT = "insert into `%s` (account_id, account, ctime, utime) value (?,?,?,?)";
+    private final String DELETE = "delete from `%s` where account_id = ?";
 
     public AccountDAO() {
         createIfAbsent();
@@ -40,28 +41,28 @@ public class AccountDAO extends BaseDAO {
     @Override
     public void createIfAbsent() {
         if (!JdbcTemplate.checkIfExist("tb_account")) {
-            JdbcTemplate.execute(CREATE);
+            JdbcTemplate.execute(String.format(CREATE, TABLE_NAME));
         }
     }
 
-    public void save(Account account) throws IllegalAccessException {
+    public void insert(Account account) throws IllegalAccessException {
 //        Object[] params = new Object[] {account.getAccountId(), account.getAccount(), account.getCtime(), account.getUtime()};
-        JdbcTemplate.execute(INSERT, PropertyUtils.findFieldValue(account));
+        JdbcTemplate.execute(String.format(INSERT, TABLE_NAME), PropertyUtils.findFieldValue(account));
     }
 
     public void delete(Long accountId) {
-        JdbcTemplate.execute(DELETE, accountId);
+        JdbcTemplate.execute(String.format(DELETE, TABLE_NAME), accountId);
     }
 
     public void update(Account account) {
-        String sql = "update tb_account set account = ?, utime = ? where account_id = ?";
+        String sql = "update `%s` set account = ?, utime = ? where account_id = ?";
         Object[] params = new Object[]{account.getAccount(), new Timestamp(System.currentTimeMillis()), account.getAccountId()};
-        JdbcTemplate.execute(sql, params);
+        JdbcTemplate.execute(String.format(sql, TABLE_NAME), params);
     }
 
     public Account get(Long accountId) {
-        String sql = "select * from tb_account where account_id = ?";
-        List<Account> accounts = JdbcTemplate.query(sql, new BeanHandler<>(Account.class), accountId);
+        String sql = "select * from `%s` where account_id = ?";
+        List<Account> accounts = JdbcTemplate.query(String.format(sql, TABLE_NAME), new BeanHandler<>(Account.class), accountId);
         return CollectionUtils.isEmpty(accounts) ? null : accounts.get(0);
     }
 
@@ -71,10 +72,10 @@ public class AccountDAO extends BaseDAO {
         try {
             connection = DruidUtils.getConnection();
             connection.setAutoCommit(false);
-            statement = connection.prepareStatement(DELETE_ALL);
+            statement = connection.prepareStatement(String.format(DELETE_ALL, TABLE_NAME));
             statement.execute();
 
-            statement = connection.prepareStatement(INSERT);
+            statement = connection.prepareStatement(String.format(INSERT, TABLE_NAME));
             for (Account account : accounts) {
                 statement.setLong(1, account.getAccountId());
                 statement.setString(2, account.getAccount());
@@ -98,7 +99,7 @@ public class AccountDAO extends BaseDAO {
         try {
             connection = DruidUtils.getConnection();
             connection.setAutoCommit(false);
-            deleteStat = connection.prepareStatement(DELETE);
+            deleteStat = connection.prepareStatement(String.format(DELETE, TABLE_NAME));
             for (Account account : accounts) {
                 deleteStat.setLong(1, account.getAccountId());
                 deleteStat.addBatch();
@@ -119,7 +120,7 @@ public class AccountDAO extends BaseDAO {
         try {
             connection = DruidUtils.getConnection();
             connection.setAutoCommit(false);
-            statement = connection.prepareStatement(INSERT);
+            statement = connection.prepareStatement(String.format(INSERT, TABLE_NAME));
             for (Account account : accounts) {
                 statement.setLong(1, account.getAccountId());
                 statement.setString(2, account.getAccount());
@@ -138,7 +139,7 @@ public class AccountDAO extends BaseDAO {
     }
 
     public List<Account> list() {
-        String sql = "select * from tb_account";
-        return JdbcTemplate.query(sql, new BeanHandler<>(Account.class));
+        String sql = "select * from `%s`";
+        return JdbcTemplate.query(String.format(sql, TABLE_NAME), new BeanHandler<>(Account.class));
     }
 }

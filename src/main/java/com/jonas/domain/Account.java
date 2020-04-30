@@ -1,6 +1,5 @@
 package com.jonas.domain;
 
-import javafx.beans.NamedArg;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;

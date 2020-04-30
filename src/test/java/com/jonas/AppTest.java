@@ -23,7 +23,7 @@ public class AppTest {
     @Test
     public void testSave() {
         try {
-            accountDAO.save(new Account(null, "张三", new Timestamp(System.currentTimeMillis()), new Timestamp(System.currentTimeMillis())));
+            accountDAO.insert(new Account(null, "张三", new Timestamp(System.currentTimeMillis()), new Timestamp(System.currentTimeMillis())));
         } catch (Exception e) {
             e.printStackTrace();
         }
