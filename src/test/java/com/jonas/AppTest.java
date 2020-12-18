@@ -1,7 +1,11 @@
 package com.jonas;
 
 import com.jonas.dao.AccountDAO;
+import com.jonas.dao.BigNumberDAO;
+import com.jonas.dao.GameNumberDAO;
 import com.jonas.domain.Account;
+import com.jonas.domain.BigNumber;
+import com.jonas.domain.GameNumber;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
@@ -14,10 +18,14 @@ import java.util.List;
 public class AppTest {
 
     private static AccountDAO accountDAO;
+    private static GameNumberDAO gameNumberDAO;
+    private static BigNumberDAO bigNumberDAO;
 
     @BeforeClass
     public static void init() {
         accountDAO = new AccountDAO();
+        gameNumberDAO = new GameNumberDAO();
+        bigNumberDAO = new BigNumberDAO();
     }
 
     @Test
@@ -30,8 +38,29 @@ public class AppTest {
     }
 
     @Test
+    public void testSaveNumber() {
+        for (int i = 0; i < 1000000; i++) {
+            GameNumber gameNumber = new GameNumber(i + "", i + "", i, new Timestamp(System.currentTimeMillis()), new Timestamp(System.currentTimeMillis()));
+            gameNumberDAO.save(gameNumber);
+        }
+    }
+
+    @Test
+    public void testSaveBigNumber() {
+        for (int i = 0; i < 1000000; i++) {
+            BigNumber bigNumber = new BigNumber(String.valueOf(i), i);
+            bigNumberDAO.save(bigNumber);
+        }
+    }
+
+    @Test
+    public void testCountBigNumber() {
+        System.out.println(bigNumberDAO.count());
+    }
+
+    @Test
     public void testDelete() {
-        accountDAO.delete(3L);
+        accountDAO.delete("sur-1@(200,115,0)");
     }
 
     @Test

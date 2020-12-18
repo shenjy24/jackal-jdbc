@@ -22,7 +22,7 @@ import java.util.List;
 public class AccountDAO extends BaseDAO {
 
     private static final String CREATE = "CREATE TABLE `tb_account` (\n" +
-            "  `account_id` int(11) NOT NULL auto increment comment '账户ID',\n" +
+            "  `account_id` int(11) NOT NULL auto_increment comment '账户ID',\n" +
             "  `account` varchar(32) DEFAULT NULL comment '账户',\n" +
             "  `ctime` datetime DEFAULT NULL comment '创建时间',\n" +
             "  `utime` datetime DEFAULT NULL comment '更新时间',\n" +
@@ -32,6 +32,7 @@ public class AccountDAO extends BaseDAO {
     private static final String DELETE_ALL = "delete from tb_account";
     private static final String INSERT = "insert into tb_account (account_id, account, ctime, utime) value (?,?,?,?)";
     private static final String DELETE = "delete from tb_account where account_id = ?";
+    private static final String DELETE_ACCOUNT = "delete from tb_account where account = ?";
 
     public AccountDAO() {
         createIfAbsent();
@@ -45,12 +46,15 @@ public class AccountDAO extends BaseDAO {
     }
 
     public void save(Account account) throws IllegalAccessException {
-//        Object[] params = new Object[] {account.getAccountId(), account.getAccount(), account.getCtime(), account.getUtime()};
         JdbcTemplate.execute(INSERT, PropertyUtils.findFieldValue(account));
     }
 
     public void delete(Long accountId) {
         JdbcTemplate.execute(DELETE, accountId);
+    }
+
+    public void delete(String account) {
+        JdbcTemplate.execute(DELETE_ACCOUNT, account);
     }
 
     public void update(Account account) {
