@@ -1,148 +1,88 @@
 package com.jonas.dao;
 
 import com.jonas.domain.Account;
-import com.jonas.util.PropertyUtils;
-import com.jonas.util.jdbc.BeanHandler;
-import com.jonas.util.jdbc.DruidUtils;
 import com.jonas.util.jdbc.JdbcTemplate;
-import org.apache.commons.collections4.CollectionUtils;
+import com.jonas.util.jdbc.PropertyUtils;
+import lombok.SneakyThrows;
 
-import java.sql.Connection;
-import java.sql.PreparedStatement;
 import java.sql.Timestamp;
 import java.util.List;
 
-/**
- * <p>
- * </p>
- *
- * @author shenjiayun
- * @since 2019-10-25
- */
 public class AccountDAO extends BaseDAO {
 
-    private static final String CREATE = "CREATE TABLE `tb_account` (\n" +
-            "  `account_id` int(11) NOT NULL auto_increment comment '账户ID',\n" +
-            "  `account` varchar(32) DEFAULT NULL comment '账户',\n" +
+    private final static String TABLE = "tb_account";
+    private final static String CREATE = "CREATE TABLE `%s` (\n" +
+            "  `account_id` varchar(64) NOT NULL comment '账户ID',\n" +
+            "  `balance` int(11) NOT NULL DEFAULT 0 comment '账户余额',\n" +
             "  `ctime` datetime DEFAULT NULL comment '创建时间',\n" +
             "  `utime` datetime DEFAULT NULL comment '更新时间',\n" +
             "  PRIMARY KEY (`account_id`)\n" +
             ") ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 comment '账户信息表'";
 
-    private static final String DELETE_ALL = "delete from tb_account";
-    private static final String INSERT = "insert into tb_account (account_id, account, ctime, utime) value (?,?,?,?)";
-    private static final String DELETE = "delete from tb_account where account_id = ?";
-    private static final String DELETE_ACCOUNT = "delete from tb_account where account = ?";
+    private final static String INSERT = "insert into `%s` (account_id, balance, ctime, utime) value (?,?,?,?)";
+    private final static String DELETE = "delete from `%s` where account_id = ?";
 
     public AccountDAO() {
-        createIfAbsent();
+        createIfAbsent(TABLE, String.format(CREATE, TABLE));
     }
 
-    @Override
-    public void createIfAbsent() {
-        if (!JdbcTemplate.checkIfExist("tb_account")) {
-            JdbcTemplate.execute(CREATE);
-        }
+    @SneakyThrows
+    public void save(Account account) {
+//        Object[] params = new Object[] {account.getAccountId(), account.getAccount(), account.getCtime(), account.getUtime()};
+        execute(String.format(INSERT, TABLE), PropertyUtils.findFieldValue(account));
     }
 
-    public void save(Account account) throws IllegalAccessException {
-        JdbcTemplate.execute(INSERT, PropertyUtils.findFieldValue(account));
-    }
-
-    public void delete(Long accountId) {
-        JdbcTemplate.execute(DELETE, accountId);
-    }
-
-    public void delete(String account) {
-        JdbcTemplate.execute(DELETE_ACCOUNT, account);
+    public void delete(String accountId) {
+        execute(String.format(DELETE, TABLE), accountId);
     }
 
     public void update(Account account) {
-        String sql = "update tb_account set account = ?, utime = ? where account_id = ?";
-        Object[] params = new Object[]{account.getAccount(), new Timestamp(System.currentTimeMillis()), account.getAccountId()};
-        JdbcTemplate.execute(sql, params);
+        String sql = "update `%s` set balance = ?, utime = ? where account_id = ?";
+        Object[] params = new Object[]{account.getBalance(), new Timestamp(System.currentTimeMillis()), account.getAccountId()};
+        execute(String.format(sql, TABLE), params);
     }
 
-    public Account get(Long accountId) {
-        String sql = "select * from tb_account where account_id = ?";
-        List<Account> accounts = JdbcTemplate.query(sql, new BeanHandler<>(Account.class), accountId);
-        return CollectionUtils.isEmpty(accounts) ? null : accounts.get(0);
+    public Account findOne(String accountId) {
+        String sql = "select * from `%s` where account_id = ?";
+        return findOne(String.format(sql, TABLE), Account.class, accountId);
     }
 
-    public void reset(List<Account> accounts) {
-        PreparedStatement statement = null;
-        Connection connection = null;
-        try {
-            connection = DruidUtils.getConnection();
-            connection.setAutoCommit(false);
-            statement = connection.prepareStatement(DELETE_ALL);
-            statement.execute();
-
-            statement = connection.prepareStatement(INSERT);
-            for (Account account : accounts) {
-                statement.setLong(1, account.getAccountId());
-                statement.setString(2, account.getAccount());
-                statement.setTimestamp(4, account.getCtime());
-                statement.setTimestamp(5, account.getUtime());
-                statement.addBatch();
-            }
-            statement.executeBatch();
-            connection.commit();
-        } catch (Exception e) {
-            rollback(connection);
-        } finally {
-            closeStatement(statement);
-            closeConnection(connection);
-        }
+    public List<Account> findAll() {
+        String sql = "select * from `%s`";
+        return findAll(String.format(sql, TABLE), Account.class);
     }
 
-    public void batchDelete(List<Account> accounts) {
-        PreparedStatement deleteStat = null;
-        Connection connection = null;
-        try {
-            connection = DruidUtils.getConnection();
-            connection.setAutoCommit(false);
-            deleteStat = connection.prepareStatement(DELETE);
-            for (Account account : accounts) {
-                deleteStat.setLong(1, account.getAccountId());
-                deleteStat.addBatch();
-            }
-            deleteStat.executeBatch();
-            connection.commit();
-        } catch (Exception e) {
-            rollback(connection);
-        } finally {
-            closeStatement(deleteStat);
-            closeConnection(connection);
-        }
+
+    public void reset(final List<Account> accounts) {
+        doTransaction(connection -> {
+            //先删除所有旧数据
+            String deleteSql = "delete from `%s`";
+            execute(String.format(deleteSql, TABLE));
+            //保存新数据
+            accounts.forEach(account -> {
+                Object[] params = new Object[] {account.getAccountId(), account.getBalance(), account.getCtime(), account.getUtime()};
+                JdbcTemplate.executeUpdate(connection, String.format(INSERT, TABLE), params);
+            });
+            return true;
+        });
     }
 
-    public void batchInsert(List<Account> accounts) {
-        PreparedStatement statement = null;
-        Connection connection = null;
-        try {
-            connection = DruidUtils.getConnection();
-            connection.setAutoCommit(false);
-            statement = connection.prepareStatement(INSERT);
-            for (Account account : accounts) {
-                statement.setLong(1, account.getAccountId());
-                statement.setString(2, account.getAccount());
-                statement.setTimestamp(4, account.getCtime());
-                statement.setTimestamp(5, account.getUtime());
-                statement.addBatch();
-            }
-            statement.executeBatch();
-            connection.commit();
-        } catch (Exception e) {
-            rollback(connection);
-        } finally {
-            closeStatement(statement);
-            closeConnection(connection);
-        }
+    public void batchDelete(final List<String> accountIds) {
+        doTransaction(connection -> {
+            accountIds.forEach(accountId -> {
+                JdbcTemplate.executeUpdate(connection, String.format(DELETE, TABLE), accountId);
+            });
+            return true;
+        });
     }
 
-    public List<Account> list() {
-        String sql = "select * from tb_account";
-        return JdbcTemplate.query(sql, new BeanHandler<>(Account.class));
+    public void batchSave(List<Account> accounts) {
+        doTransaction(connection -> {
+            accounts.forEach(account -> {
+                Object[] params = new Object[] {account.getAccountId(), account.getBalance(), account.getCtime(), account.getUtime()};
+                JdbcTemplate.executeUpdate(connection, String.format(INSERT, TABLE), params);
+            });
+            return true;
+        });
     }
 }

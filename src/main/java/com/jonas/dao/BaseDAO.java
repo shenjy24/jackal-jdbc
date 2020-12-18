@@ -1,24 +1,108 @@
 package com.jonas.dao;
 
-import java.sql.Connection;
-import java.sql.ResultSet;
-import java.sql.SQLException;
-import java.sql.Statement;
+import com.jonas.util.jdbc.BeanHandler;
+import com.jonas.util.jdbc.DruidUtils;
+import com.jonas.util.jdbc.JdbcTemplate;
+import com.jonas.util.jdbc.TransactionTask;
 
-/**
- * <p>
- * DAO基类
- * </p>
- *
- * @author shenjiayun
- * @since 2019-10-25
- */
+import java.sql.*;
+import java.util.List;
+
 public abstract class BaseDAO {
+    protected void createIfAbsent(String tableName, String sql) {
+        Connection connection = null;
+        try {
+            connection = DruidUtils.getConnection();
+            if (!JdbcTemplate.checkIfExist(connection, tableName)) {
+                JdbcTemplate.execute(connection, sql);
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        } finally {
+            closeConnection(connection);
+        }
+    }
 
     /**
-     * 表不存在则创建
+     * 判断表是否存在
      */
-    public abstract void createIfAbsent();
+    protected boolean checkExist(String tableName) {
+        Connection connection = null;
+        ResultSet resultSet = null;
+        try {
+            connection = DruidUtils.getConnection();
+            if (null != connection) {
+                DatabaseMetaData metaData = connection.getMetaData();
+                String[] type = {"TABLE"};
+                resultSet = metaData.getTables(connection.getCatalog(), connection.getSchema(), tableName, type);
+                return resultSet.next();
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        } finally {
+            closeResultSet(resultSet);
+            closeConnection(connection);
+        }
+        return false;
+    }
+
+    protected <T> T findOne(String sql, Class<T> clazz, Object...args) {
+        Connection connection = null;
+        try {
+            connection = DruidUtils.getConnection();
+            return JdbcTemplate.findOne(connection, sql, new BeanHandler<>(clazz), args);
+        } catch (Exception e) {
+            e.printStackTrace();
+        } finally {
+            closeConnection(connection);
+        }
+        return null;
+    }
+
+    protected <T> List<T> findAll(String sql, Class<T> clazz, Object...args) {
+        Connection connection = null;
+        try {
+            connection = DruidUtils.getConnection();
+            return JdbcTemplate.findAll(connection, sql, new BeanHandler<>(clazz), args);
+        } catch (Exception e) {
+            e.printStackTrace();
+        } finally {
+            closeConnection(connection);
+        }
+        return null;
+    }
+
+    protected boolean execute(String sql, Object...args) {
+        Connection connection = null;
+        try {
+            connection = DruidUtils.getConnection();
+            return JdbcTemplate.executeUpdate(connection, sql, args);
+        } catch (Exception e) {
+            e.printStackTrace();
+        } finally {
+            closeConnection(connection);
+        }
+        return false;
+    }
+
+    protected void doTransaction(TransactionTask task) {
+        Connection connection = null;
+        try {
+            connection = DruidUtils.getConnection();
+            connection.setAutoCommit(false);
+            boolean result = task.doTask(connection);
+            if (result) {
+                connection.commit();
+            } else {
+                connection.rollback();
+            }
+        } catch (SQLException e) {
+            rollback(connection);
+            e.printStackTrace();
+        } finally {
+            closeConnection(connection);
+        }
+    }
 
     protected void closeResultSet(ResultSet resultSet) {
         try {

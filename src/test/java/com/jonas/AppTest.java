@@ -1,82 +1,85 @@
 package com.jonas;
 
 import com.jonas.dao.AccountDAO;
-import com.jonas.dao.BigNumberDAO;
-import com.jonas.dao.GameNumberDAO;
 import com.jonas.domain.Account;
-import com.jonas.domain.BigNumber;
-import com.jonas.domain.GameNumber;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
 import java.sql.Timestamp;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Random;
+import java.util.UUID;
 
-/**
- * Unit test for simple App.
- */
 public class AppTest {
 
     private static AccountDAO accountDAO;
-    private static GameNumberDAO gameNumberDAO;
-    private static BigNumberDAO bigNumberDAO;
 
     @BeforeClass
     public static void init() {
         accountDAO = new AccountDAO();
-        gameNumberDAO = new GameNumberDAO();
-        bigNumberDAO = new BigNumberDAO();
     }
 
     @Test
     public void testSave() {
         try {
-            accountDAO.save(new Account(null, "张三", new Timestamp(System.currentTimeMillis()), new Timestamp(System.currentTimeMillis())));
+            accountDAO.save(buildOne());
         } catch (Exception e) {
             e.printStackTrace();
         }
     }
 
     @Test
-    public void testSaveNumber() {
-        for (int i = 0; i < 1000000; i++) {
-            GameNumber gameNumber = new GameNumber(i + "", i + "", i, new Timestamp(System.currentTimeMillis()), new Timestamp(System.currentTimeMillis()));
-            gameNumberDAO.save(gameNumber);
+    public void testBatchSave() {
+        try {
+            List<Account> accounts = build(5);
+            accountDAO.batchSave(accounts);
+        } catch (Exception e) {
+            e.printStackTrace();
         }
-    }
-
-    @Test
-    public void testSaveBigNumber() {
-        for (int i = 0; i < 1000000; i++) {
-            BigNumber bigNumber = new BigNumber(String.valueOf(i), i);
-            bigNumberDAO.save(bigNumber);
-        }
-    }
-
-    @Test
-    public void testCountBigNumber() {
-        System.out.println(bigNumberDAO.count());
-    }
-
-    @Test
-    public void testDelete() {
-        accountDAO.delete("sur-1@(200,115,0)");
     }
 
     @Test
     public void testUpdate() {
-        accountDAO.update(new Account(4L, "李四", new Timestamp(System.currentTimeMillis()), new Timestamp(System.currentTimeMillis())));
+        Account account = new Account();
+        account.setAccountId("ff3ceb46-6170-414a-be34-2268e38ad1bb");
+        account.setBalance(100);
+        accountDAO.update(account);
     }
 
     @Test
     public void testGet() {
-        Account account = accountDAO.get(1L);
+        Account account = accountDAO.findOne("ff3ceb46-6170-414a-be34-2268e38ad1bb");
         System.out.println(account);
     }
 
     @Test
     public void testList() {
-        List<Account> accounts = accountDAO.list();
+        List<Account> accounts = accountDAO.findAll();
         System.out.println(accounts);
+    }
+
+    @Test
+    public void testReset() {
+        List<Account> accounts = build(2);
+        accountDAO.reset(accounts);
+    }
+
+    private Account buildOne() {
+        return build(1).get(0);
+    }
+
+    private List<Account> build(int num) {
+        Random random = new Random();
+        List<Account> accounts = new ArrayList<>();
+        for (int i = 0; i < num; i++) {
+            Account account = new Account();
+            account.setAccountId(UUID.randomUUID().toString());
+            account.setBalance(random.nextInt(1000));
+            account.setCtime(new Timestamp(System.currentTimeMillis()));
+            account.setUtime(new Timestamp(System.currentTimeMillis()));
+            accounts.add(account);
+        }
+        return accounts;
     }
 }

@@ -8,13 +8,6 @@ import java.sql.Connection;
 import java.sql.SQLException;
 import java.util.Properties;
 
-/**
- * <p>
- * </p>
- *
- * @author shenjiayun
- * @since 2019-10-25
- */
 public class DruidUtils {
     private DruidUtils() {}
 
@@ -39,6 +32,4 @@ public class DruidUtils {
         }
         throw new RuntimeException("获取数据库连接异常");
     }
-
-
 }

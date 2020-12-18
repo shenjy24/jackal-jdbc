@@ -1,6 +1,5 @@
 package com.jonas.util.jdbc;
 
-import com.jonas.util.PropertyUtils;
 import org.apache.commons.beanutils.BeanUtils;
 
 import javax.persistence.Column;
@@ -19,7 +18,7 @@ import java.util.List;
  * @author shenjiayun
  * @since 2019-10-25
  */
-public class BeanHandler<T> implements ResultSetHandler<List<T>> {
+public class BeanHandler<T> implements ResultSetHandler<T> {
 
     // 创建字节码对象
     private Class<T> clazz;
@@ -39,13 +38,15 @@ public class BeanHandler<T> implements ResultSetHandler<List<T>> {
                 T obj = clazz.newInstance();
                 for (PropertyDescriptor descriptor : descriptors) {
                     Field field = PropertyUtils.findField(obj, descriptor);
+                    if (field.isAnnotationPresent(Ignore.class)) {
+                        continue;
+                    }
                     String columnName = descriptor.getName();
                     if (field.isAnnotationPresent(Column.class)) {
                         columnName = field.getAnnotation(Column.class).name();
                     }
                     Object value = resultSet.getObject(columnName);
                     BeanUtils.setProperty(obj, descriptor.getName(), value);
-//                    descriptor.getWriteMethod().invoke(obj, value);
                 }
                 list.add(obj);
             }
