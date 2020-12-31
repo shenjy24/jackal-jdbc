@@ -57,7 +57,7 @@ public class AccountDAO extends BaseDAO {
         doTransaction(connection -> {
             //先删除所有旧数据
             String deleteSql = "delete from `%s`";
-            execute(String.format(deleteSql, TABLE));
+            JdbcTemplate.executeUpdate(connection, String.format(deleteSql, TABLE));
             //保存新数据
             accounts.forEach(account -> {
                 Object[] params = new Object[] {account.getAccountId(), account.getBalance(), account.getCtime(), account.getUtime()};
