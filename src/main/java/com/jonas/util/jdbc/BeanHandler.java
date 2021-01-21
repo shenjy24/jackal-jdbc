@@ -8,6 +8,7 @@ import java.beans.Introspector;
 import java.beans.PropertyDescriptor;
 import java.lang.reflect.Field;
 import java.sql.ResultSet;
+import java.sql.ResultSetMetaData;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -32,6 +33,12 @@ public class BeanHandler<T> implements ResultSetHandler<T> {
     public List<T> handle(ResultSet resultSet) {
         List<T> list = new ArrayList<>();
         try {
+            List<String> columnNames = new ArrayList<>();
+            ResultSetMetaData metaData = resultSet.getMetaData();
+            for (int i = 1; i <= metaData.getColumnCount(); i++) {
+                columnNames.add(metaData.getColumnName(i));
+            }
+
             BeanInfo beanInfo = Introspector.getBeanInfo(clazz, Object.class);
             PropertyDescriptor[] descriptors = beanInfo.getPropertyDescriptors();
             while (resultSet.next()) {
@@ -44,6 +51,9 @@ public class BeanHandler<T> implements ResultSetHandler<T> {
                     String columnName = descriptor.getName();
                     if (field.isAnnotationPresent(Column.class)) {
                         columnName = field.getAnnotation(Column.class).name();
+                    }
+                    if (!columnNames.contains(columnName)) {
+                        continue;
                     }
                     Object value = resultSet.getObject(columnName);
                     BeanUtils.setProperty(obj, descriptor.getName(), value);

@@ -1,7 +1,9 @@
 package com.jonas;
 
-import com.jonas.dao.AccountDAO;
-import com.jonas.domain.Account;
+import com.jonas.dao.UserDAO;
+import com.jonas.domain.User;
+import com.jonas.util.DateUtils;
+import org.apache.commons.lang3.RandomUtils;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
@@ -13,17 +15,20 @@ import java.util.UUID;
 
 public class AppTest {
 
-    private static AccountDAO accountDAO;
+    private static UserDAO userDAO;
 
     @BeforeClass
     public static void init() {
-        accountDAO = new AccountDAO();
+        userDAO = new UserDAO();
     }
 
     @Test
     public void testSave() {
         try {
-            accountDAO.save(buildOne());
+            List<User> users = build(100000);
+            for (User user : users) {
+                userDAO.save(user);
+            }
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -32,54 +37,53 @@ public class AppTest {
     @Test
     public void testBatchSave() {
         try {
-            List<Account> accounts = build(5);
-            accountDAO.batchSave(accounts);
+            List<User> users = build(500000);
+            userDAO.batchSave(users);
         } catch (Exception e) {
             e.printStackTrace();
         }
     }
 
     @Test
-    public void testUpdate() {
-        Account account = new Account();
-        account.setAccountId("ff3ceb46-6170-414a-be34-2268e38ad1bb");
-        account.setBalance(100);
-        accountDAO.update(account);
-    }
-
-    @Test
     public void testGet() {
-        Account account = accountDAO.findOne("ff3ceb46-6170-414a-be34-2268e38ad1bb");
-        System.out.println(account);
+        User user = userDAO.findOne("ff3ceb46-6170-414a-be34-2268e38ad1bb");
+        System.out.println(user);
     }
 
     @Test
     public void testList() {
-        List<Account> accounts = accountDAO.findAll();
-        System.out.println(accounts);
+        List<User> users = userDAO.findAll();
+        System.out.println(users);
+    }
+
+    @Test
+    public void testCount() {
+        UserDAO.Count count = userDAO.count();
+        System.out.println(count);
     }
 
     @Test
     public void testReset() {
-        List<Account> accounts = build(2);
-        accountDAO.reset(accounts);
+        List<User> users = build(2);
+        userDAO.reset(users);
     }
 
-    private Account buildOne() {
+    private User buildOne() {
         return build(1).get(0);
     }
 
-    private List<Account> build(int num) {
-        Random random = new Random();
-        List<Account> accounts = new ArrayList<>();
+    private List<User> build(int num) {
+        List<User> users = new ArrayList<>();
         for (int i = 0; i < num; i++) {
-            Account account = new Account();
-            account.setAccountId(UUID.randomUUID().toString());
-            account.setBalance(random.nextInt(1000));
-            account.setCtime(new Timestamp(System.currentTimeMillis()));
-            account.setUtime(new Timestamp(System.currentTimeMillis()));
-            accounts.add(account);
+            User user = new User();
+            user.setUserName("Jonas" + i);
+            user.setUserAge(RandomUtils.nextInt(1, 100));
+            user.setUserScore(RandomUtils.nextInt(0, 1000000));
+            user.setUserStatus(RandomUtils.nextInt(0, 2));
+            user.setCtime(RandomUtils.nextLong(DateUtils.getStampFromTime("2021-01-01 00:00:00"), System.currentTimeMillis()));
+            user.setUtime(user.getCtime());
+            users.add(user);
         }
-        return accounts;
+        return users;
     }
 }
