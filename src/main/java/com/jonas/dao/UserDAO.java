@@ -30,8 +30,7 @@ public class UserDAO extends BaseDAO {
 
     @SneakyThrows
     public void save(User user) {
-        Object[] args = new Object[]{user.getUserName(), user.getUserAge(), user.getUserStatus(), user.getUserScore(),
-                System.currentTimeMillis(), System.currentTimeMillis()};
+        Object[] args = new Object[]{user.getUserName(), user.getUserAge(), user.getUserStatus(), user.getUserScore(), user.getCtime(), user.getUtime()};
         execute(String.format(INSERT, TABLE), args);
     }
 

@@ -25,7 +25,7 @@ public class AppTest {
     @Test
     public void testSave() {
         try {
-            List<User> users = build(100000);
+            List<User> users = build(20);
             for (User user : users) {
                 userDAO.save(user);
             }
@@ -73,17 +73,23 @@ public class AppTest {
     }
 
     private List<User> build(int num) {
+        Random random = new Random();
         List<User> users = new ArrayList<>();
         for (int i = 0; i < num; i++) {
             User user = new User();
             user.setUserName("Jonas" + i);
-            user.setUserAge(RandomUtils.nextInt(1, 100));
-            user.setUserScore(RandomUtils.nextInt(0, 1000000));
-            user.setUserStatus(RandomUtils.nextInt(0, 2));
-            user.setCtime(RandomUtils.nextLong(DateUtils.getStampFromTime("2021-01-01 00:00:00"), System.currentTimeMillis()));
-            user.setUtime(user.getCtime());
+            user.setUserAge(random.nextInt(100));
+            user.setUserScore(random.nextInt(1000000));
+            user.setUserStatus(random.nextInt(2));
+            int time = nextInt(DateUtils.getSecondFromTime("2021-01-20 20:15:00"), DateUtils.getSecondFromTime("2021-02-01 00:00:00"));
+            user.setCtime(time * 1000L);
+            user.setUtime(time * 1000L);
             users.add(user);
         }
         return users;
+    }
+
+    public static int nextInt(int start, int end) {
+        return (int) Math.floor(Math.random() * (end - start + 1) + start);
     }
 }
